@@ -26,13 +26,15 @@ public sealed class SecopApiClient : ISecopApiClient
 
     public async Task<IReadOnlyList<SecopProcessRecord>> SearchAsync(
         string where,
+        string? fullText,
         int limit,
         int offset,
+        bool compact,
         CancellationToken cancellationToken)
     {
         var query = new Dictionary<string, string?>
         {
-            ["$select"] = SecopFields.SelectList,
+            ["$select"] = compact ? SecopFields.ListSelect : SecopFields.SelectList,
             ["$order"] = $"{SecopFields.PublishedOn} DESC",
             ["$limit"] = limit.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["$offset"] = offset.ToString(System.Globalization.CultureInfo.InvariantCulture)
@@ -40,6 +42,9 @@ public sealed class SecopApiClient : ISecopApiClient
 
         if (!string.IsNullOrWhiteSpace(where))
             query["$where"] = where;
+
+        if (!string.IsNullOrWhiteSpace(fullText))
+            query["$q"] = fullText;
 
         var body = await GetStringAsync(query, cancellationToken);
         var records = JsonSerializer.Deserialize<List<SecopProcessRecord>>(body, JsonOptions);

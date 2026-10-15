@@ -11,4 +11,6 @@ public sealed class PaginationResponse<T>
     public int TotalRecords { get; set; }
 
     public int TotalPages { get; set; }
+
+    public bool HasMore { get; set; }
 }

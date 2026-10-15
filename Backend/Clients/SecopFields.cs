@@ -10,6 +10,12 @@ public static class SecopFields
         "nombre_del_proveedor,nit_del_proveedor_adjudicado,codigo_principal_de_categoria," +
         "estado_de_apertura_del_proceso,tipo_de_contrato,urlproceso";
 
+    public const string ListSelect =
+        "id_del_proceso,referencia_del_proceso,entidad,departamento_entidad,ciudad_entidad," +
+        "nombre_del_procedimiento,fecha_de_publicacion_del,fecha_de_recepcion_de,precio_base," +
+        "modalidad_de_contratacion,estado_del_procedimiento,adjudicado,nombre_del_proveedor," +
+        "tipo_de_contrato,urlproceso";
+
     public const string PublishedOn = "fecha_de_publicacion_del";
     public const string Status = "estado_del_procedimiento";
     public const string ProcedureName = "nombre_del_procedimiento";

@@ -33,8 +33,10 @@ public class ProcessServiceTests
         Assert.Equal(400, result.StatusCode);
         _client.Verify(client => client.SearchAsync(
             It.IsAny<string>(),
+            It.IsAny<string?>(),
             It.IsAny<int>(),
             It.IsAny<int>(),
+            It.IsAny<bool>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -42,8 +44,14 @@ public class ProcessServiceTests
     public async Task SearchAsync_WhenPublishedByDefault_QueriesUpstreamAndMapsRows()
     {
         string? capturedWhere = null;
-        _client.Setup(client => client.SearchAsync(It.IsAny<string>(), 20, 0, It.IsAny<CancellationToken>()))
-            .Callback<string, int, int, CancellationToken>((where, _, _, _) => capturedWhere = where)
+        _client.Setup(client => client.SearchAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                21,
+                0,
+                true,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, int, int, bool, CancellationToken>((where, _, _, _, _, _) => capturedWhere = where)
             .ReturnsAsync(
             [
                 new SecopProcessRecord
@@ -55,28 +63,32 @@ public class ProcessServiceTests
                     PublishedOn = "2026-10-01T00:00:00.000"
                 }
             ]);
-        _client.Setup(client => client.CountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
 
         var result = await _service.SearchAsync(new ProcessSearchRequest(), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Equal(1, result.Value!.TotalRecords);
+        Assert.False(result.Value!.HasMore);
+        Assert.Equal(1, result.Value.TotalRecords);
         Assert.Equal("CO1.REQ.10", result.Value.Items[0].ProcessId);
         Assert.Equal(1500m, result.Value.Items[0].BasePrice);
         Assert.NotNull(capturedWhere);
         Assert.Contains("fecha_de_publicacion_del IS NOT NULL", capturedWhere, StringComparison.Ordinal);
-        Assert.Contains("!= 'BORRADOR'", capturedWhere, StringComparison.Ordinal);
+        Assert.Contains("!= 'Borrador'", capturedWhere, StringComparison.Ordinal);
+        _client.Verify(client => client.CountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task SearchAsync_WhenUpstreamFails_ReturnsBadGateway()
     {
-        _client.Setup(client => client.SearchAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _client.Setup(client => client.SearchAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()))
             .ThrowsAsync(new SecopUnavailableException("down"));
-        _client.Setup(client => client.CountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(0);
 
         var result = await _service.SearchAsync(new ProcessSearchRequest(), CancellationToken.None);
 
@@ -87,7 +99,13 @@ public class ProcessServiceTests
     [Fact]
     public async Task GetByIdAsync_WhenProcessDoesNotExist_ReturnsNotFound()
     {
-        _client.Setup(client => client.SearchAsync(It.IsAny<string>(), 1, 0, It.IsAny<CancellationToken>()))
+        _client.Setup(client => client.SearchAsync(
+                It.IsAny<string>(),
+                null,
+                1,
+                0,
+                false,
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var result = await _service.GetByIdAsync("CO1.REQ.99", CancellationToken.None);
@@ -104,8 +122,10 @@ public class ProcessServiceTests
         Assert.Equal(400, result.StatusCode);
         _client.Verify(client => client.SearchAsync(
             It.IsAny<string>(),
+            It.IsAny<string?>(),
             It.IsAny<int>(),
             It.IsAny<int>(),
+            It.IsAny<bool>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 }

@@ -35,24 +35,26 @@ public sealed class ProcessService : IProcessService
             var criteria = ToCriteria(request);
             var where = SecopQueryBuilder.BuildWhere(criteria);
             var offset = (request.PageNumber - 1) * request.PageSize;
+            var records = await _secopApiClient.SearchAsync(
+                where,
+                SecopQueryBuilder.BuildFullText(criteria.Keyword),
+                request.PageSize + 1,
+                offset,
+                compact: true,
+                cancellationToken);
 
-            var recordsTask = _secopApiClient.SearchAsync(where, request.PageSize, offset, cancellationToken);
-            var countTask = _secopApiClient.CountAsync(where, cancellationToken);
-            await Task.WhenAll(recordsTask, countTask);
-
-            var items = _mapper.Map<List<ProcessResponse>>(await recordsTask);
-            var totalRecords = await countTask;
-            var totalPages = request.PageSize == 0
-                ? 0
-                : (int)Math.Ceiling(totalRecords / (double)request.PageSize);
+            var hasMore = records.Count > request.PageSize;
+            var page = hasMore ? records.Take(request.PageSize).ToList() : records.ToList();
+            var items = _mapper.Map<List<ProcessResponse>>(page);
 
             return Result<PaginationResponse<ProcessResponse>>.Ok(new PaginationResponse<ProcessResponse>
             {
                 Items = items,
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize,
-                TotalRecords = totalRecords,
-                TotalPages = totalPages
+                TotalRecords = items.Count == 0 ? 0 : offset + items.Count,
+                TotalPages = hasMore ? request.PageNumber + 1 : request.PageNumber,
+                HasMore = hasMore
             });
         }
         catch (Exception exception) when (IsUpstreamFailure(exception, cancellationToken))
@@ -77,8 +79,10 @@ public sealed class ProcessService : IProcessService
         {
             var records = await _secopApiClient.SearchAsync(
                 SecopQueryBuilder.BuildProcessIdWhere(processId),
+                fullText: null,
                 limit: 1,
                 offset: 0,
+                compact: false,
                 cancellationToken);
 
             var record = records.FirstOrDefault();
@@ -110,8 +114,15 @@ public sealed class ProcessService : IProcessService
 
         try
         {
-            var where = SecopQueryBuilder.BuildWhere(ToCriteria(request));
-            var recordsTask = _secopApiClient.SearchAsync(where, SecopQueryBuilder.MaxExportSize, 0, cancellationToken);
+            var criteria = ToCriteria(request);
+            var where = SecopQueryBuilder.BuildWhere(criteria);
+            var recordsTask = _secopApiClient.SearchAsync(
+                where,
+                SecopQueryBuilder.BuildFullText(criteria.Keyword),
+                SecopQueryBuilder.MaxExportSize,
+                0,
+                compact: false,
+                cancellationToken);
             var countTask = _secopApiClient.CountAsync(where, cancellationToken);
             await Task.WhenAll(recordsTask, countTask);
 

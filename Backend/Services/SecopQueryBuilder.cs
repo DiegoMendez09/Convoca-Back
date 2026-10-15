@@ -19,14 +19,7 @@ public static class SecopQueryBuilder
         if (criteria.PublishedOnly)
         {
             clauses.Add($"{SecopFields.PublishedOn} IS NOT NULL");
-            clauses.Add($"upper({SecopFields.Status}) != 'BORRADOR'");
-        }
-
-        if (!string.IsNullOrWhiteSpace(criteria.Keyword))
-        {
-            var like = ContainsLiteral(criteria.Keyword);
-            clauses.Add(
-                $"(upper({SecopFields.ProcedureName}) like {like} OR upper({SecopFields.Description}) like {like} OR upper({SecopFields.EntityName}) like {like} OR upper({SecopFields.Reference}) like {like})");
+            clauses.Add($"{SecopFields.Status} != 'Borrador'");
         }
 
         AddContains(clauses, SecopFields.EntityName, criteria.EntityName);
@@ -39,10 +32,10 @@ public static class SecopQueryBuilder
 
         if (criteria.OpenForOffer)
         {
-            clauses.Add($"upper({SecopFields.Status}) = 'PUBLICADO'");
-            clauses.Add($"({SecopFields.Awarded} IS NULL OR upper({SecopFields.Awarded}) = 'NO')");
+            clauses.Add($"{SecopFields.Status} = 'Publicado'");
+            clauses.Add($"({SecopFields.Awarded} IS NULL OR {SecopFields.Awarded} = 'No')");
             clauses.Add(
-                $"({SecopFields.SupplierName} IS NULL OR upper({SecopFields.SupplierName}) = 'NO DEFINIDO')");
+                $"({SecopFields.SupplierName} IS NULL OR {SecopFields.SupplierName} = 'No Definido')");
         }
         else
         {
@@ -91,7 +84,23 @@ public static class SecopQueryBuilder
         var sanitized = value.Replace("%", string.Empty, StringComparison.Ordinal)
             .Replace("_", string.Empty, StringComparison.Ordinal)
             .Trim();
-        return $"upper({Literal("%" + sanitized + "%")})";
+        return Literal("%" + sanitized + "%");
+    }
+
+    public static string? BuildFullText(string? keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword))
+            return null;
+
+        var builder = new StringBuilder(keyword.Length);
+        foreach (var character in keyword.Trim())
+        {
+            if (char.IsLetterOrDigit(character) || char.IsWhiteSpace(character) || character is ',' or '.' or '-')
+                builder.Append(character);
+        }
+
+        var text = builder.ToString().Trim();
+        return text.Length == 0 ? null : text;
     }
 
     private static void AddContains(List<string> clauses, string column, string? value)
@@ -99,7 +108,7 @@ public static class SecopQueryBuilder
         if (string.IsNullOrWhiteSpace(value))
             return;
 
-        clauses.Add($"upper({column}) like {ContainsLiteral(value)}");
+        clauses.Add($"{column} like {ContainsLiteral(value)}");
     }
 }
 

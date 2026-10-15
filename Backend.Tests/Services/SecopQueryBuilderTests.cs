@@ -10,11 +10,11 @@ public class SecopQueryBuilderTests
         var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria());
 
         Assert.Contains("fecha_de_publicacion_del IS NOT NULL", where, StringComparison.Ordinal);
-        Assert.Contains("upper(estado_del_procedimiento) != 'BORRADOR'", where, StringComparison.Ordinal);
+        Assert.Contains("estado_del_procedimiento != 'Borrador'", where, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void BuildWhere_WhenKeywordContainsQuote_EscapesSoqlLiteral()
+    public void BuildFullText_WhenKeywordContainsQuote_KeepsSearchableText()
     {
         var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria
         {
@@ -22,8 +22,8 @@ public class SecopQueryBuilderTests
             PublishedOnly = false
         });
 
-        Assert.Contains("O''Brien", where, StringComparison.Ordinal);
-        Assert.DoesNotContain("fecha_de_publicacion_del IS NOT NULL", where, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, where);
+        Assert.Equal("OBrien", SecopQueryBuilder.BuildFullText("O'Brien"));
     }
 
     [Fact]
@@ -54,9 +54,9 @@ public class SecopQueryBuilderTests
             PublishedOnly = true
         });
 
-        Assert.Contains("upper(estado_del_procedimiento) = 'PUBLICADO'", where, StringComparison.Ordinal);
-        Assert.Contains("upper(adjudicado) = 'NO'", where, StringComparison.Ordinal);
-        Assert.Contains("upper(nombre_del_proveedor) = 'NO DEFINIDO'", where, StringComparison.Ordinal);
+        Assert.Contains("estado_del_procedimiento = 'Publicado'", where, StringComparison.Ordinal);
+        Assert.Contains("adjudicado = 'No'", where, StringComparison.Ordinal);
+        Assert.Contains("nombre_del_proveedor = 'No Definido'", where, StringComparison.Ordinal);
         Assert.DoesNotContain("Adjudicado", where, StringComparison.Ordinal);
     }
 
