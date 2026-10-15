@@ -35,8 +35,19 @@ public static class SecopQueryBuilder
         AddContains(clauses, SecopFields.City, criteria.City);
         AddContains(clauses, SecopFields.Modality, criteria.Modality);
         AddContains(clauses, SecopFields.Phase, criteria.Phase);
-        AddContains(clauses, SecopFields.Status, criteria.Status);
         AddContains(clauses, SecopFields.ContractType, criteria.ContractType);
+
+        if (criteria.OpenForOffer)
+        {
+            clauses.Add($"upper({SecopFields.Status}) = 'PUBLICADO'");
+            clauses.Add($"({SecopFields.Awarded} IS NULL OR upper({SecopFields.Awarded}) = 'NO')");
+            clauses.Add(
+                $"({SecopFields.SupplierName} IS NULL OR upper({SecopFields.SupplierName}) = 'NO DEFINIDO')");
+        }
+        else
+        {
+            AddContains(clauses, SecopFields.Status, criteria.Status);
+        }
 
         if (criteria.PublishedFrom is not null)
         {
@@ -121,6 +132,8 @@ public sealed record ProcessSearchCriteria
     public decimal? MaxBasePrice { get; init; }
 
     public bool PublishedOnly { get; init; } = true;
+
+    public bool OpenForOffer { get; init; }
 }
 
 public static class SecopValueParser

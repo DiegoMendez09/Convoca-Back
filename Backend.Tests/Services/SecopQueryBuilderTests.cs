@@ -45,6 +45,22 @@ public class SecopQueryBuilderTests
     }
 
     [Fact]
+    public void BuildWhere_WhenOpenForOffer_RequiresPublishedStatusAndNoSupplier()
+    {
+        var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria
+        {
+            OpenForOffer = true,
+            Status = "Adjudicado",
+            PublishedOnly = true
+        });
+
+        Assert.Contains("upper(estado_del_procedimiento) = 'PUBLICADO'", where, StringComparison.Ordinal);
+        Assert.Contains("upper(adjudicado) = 'NO'", where, StringComparison.Ordinal);
+        Assert.Contains("upper(nombre_del_proveedor) = 'NO DEFINIDO'", where, StringComparison.Ordinal);
+        Assert.DoesNotContain("Adjudicado", where, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuildProcessIdWhere_ReturnsExactMatch()
     {
         var where = SecopQueryBuilder.BuildProcessIdWhere("CO1.REQ.10");

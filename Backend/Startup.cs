@@ -2,9 +2,13 @@ using AutoMapper;
 using Backend.Clients;
 using Backend.Mappings.Profiles;
 using Backend.Middleware;
+using Backend.Models.Database;
 using Backend.Options;
+using Backend.Repositories.Implementations;
+using Backend.Repositories.Interfaces;
 using Backend.Services;
 using Backend.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Backend;
@@ -56,6 +60,15 @@ public class Startup
             if (!string.IsNullOrWhiteSpace(options.AppToken))
                 client.DefaultRequestHeaders.Add("X-App-Token", options.AppToken);
         });
+
+        services.AddScoped<IFavoriteService, FavoriteService>();
+
+        var connectionString = _configuration.GetConnectionString("SecopDb");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            services.AddDbContext<SecopDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+        }
 
         services.AddAutoMapper(typeof(ProcessProfile));
         services.AddScoped<IProcessService, ProcessService>();

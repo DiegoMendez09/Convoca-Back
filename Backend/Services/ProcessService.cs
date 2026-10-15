@@ -150,7 +150,8 @@ public sealed class ProcessService : IProcessService
             PublishedTo = request.PublishedTo,
             MinBasePrice = request.MinBasePrice,
             MaxBasePrice = request.MaxBasePrice,
-            PublishedOnly = request.PublishedOnly ?? true
+            PublishedOnly = request.PublishedOnly ?? true,
+            OpenForOffer = request.OpenForOffer ?? false
         };
     }
 

@@ -24,4 +24,6 @@ public static class SecopFields
     public const string ContractType = "tipo_de_contrato";
     public const string BasePrice = "precio_base";
     public const string ProcessId = "id_del_proceso";
+    public const string Awarded = "adjudicado";
+    public const string SupplierName = "nombre_del_proveedor";
 }
