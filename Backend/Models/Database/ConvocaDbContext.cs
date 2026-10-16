@@ -15,10 +15,13 @@ public sealed class ConvocaDbContext : DbContext
 
     public DbSet<MeritExam> MeritExams => Set<MeritExam>();
 
+    public DbSet<FunctionManual> FunctionManuals => Set<FunctionManual>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new FavoriteConfiguration());
         modelBuilder.ApplyConfiguration(new ProfessionalProfileConfiguration());
         modelBuilder.ApplyConfiguration(new MeritExamConfiguration());
+        modelBuilder.ApplyConfiguration(new FunctionManualConfiguration());
     }
 }

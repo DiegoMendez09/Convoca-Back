@@ -9,6 +9,7 @@ public sealed class UnitOfWork : IUnitOfWork
     private IFavoriteRepository? _favorites;
     private IProfileRepository? _profiles;
     private IMeritExamRepository? _exams;
+    private IFunctionManualRepository? _manuals;
 
     public UnitOfWork(ConvocaDbContext context)
     {
@@ -20,6 +21,8 @@ public sealed class UnitOfWork : IUnitOfWork
     public IProfileRepository Profiles => _profiles ??= new ProfileRepository(_context);
 
     public IMeritExamRepository Exams => _exams ??= new MeritExamRepository(_context);
+
+    public IFunctionManualRepository Manuals => _manuals ??= new FunctionManualRepository(_context);
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

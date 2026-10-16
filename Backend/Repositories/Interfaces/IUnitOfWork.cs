@@ -8,5 +8,7 @@ public interface IUnitOfWork
 
     IMeritExamRepository Exams { get; }
 
+    IFunctionManualRepository Manuals { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

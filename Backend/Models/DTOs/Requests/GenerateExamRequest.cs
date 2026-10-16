@@ -21,4 +21,6 @@ public sealed class GenerateExamRequest
     public string? Knowledge { get; set; }
 
     public string? Axes { get; set; }
+
+    public Guid? ManualId { get; set; }
 }

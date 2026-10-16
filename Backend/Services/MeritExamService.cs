@@ -64,6 +64,27 @@ public sealed class MeritExamService : IMeritExamService
         var functions = (request.Functions ?? string.Empty).Trim();
         var knowledge = (request.Knowledge ?? string.Empty).Trim();
         var axes = (request.Axes ?? string.Empty).Trim();
+        var grade = (request.Grade ?? string.Empty).Trim();
+
+        if (request.ManualId is Guid manualId)
+        {
+            if (_unitOfWork is null)
+                return Unavailable<MeritExamResponse>();
+
+            var manual = await _unitOfWork.Manuals.GetAsync(manualId, cancellationToken);
+            if (manual is null)
+                return Result<MeritExamResponse>.Fail("No se encontró el manual de esa OPEC.", StatusCodes.Status404NotFound);
+
+            opec = manual.OpecCode;
+            job = manual.JobTitle;
+            purpose = manual.Purpose;
+            functions = manual.Functions;
+            knowledge = manual.Knowledge;
+            if (!string.IsNullOrWhiteSpace(manual.Level))
+                level = manual.Level;
+            if (!string.IsNullOrWhiteSpace(manual.Grade))
+                grade = manual.Grade;
+        }
 
         if (opec.Length is 0 or > 40)
             return Result<MeritExamResponse>.Fail("Escribe el código de la OPEC, de hasta 40 caracteres.", StatusCodes.Status400BadRequest);
@@ -74,11 +95,11 @@ public sealed class MeritExamService : IMeritExamService
         if (call.Length > 80 || entity.Length > 200)
             return Result<MeritExamResponse>.Fail("La convocatoria o la entidad superan el tamaño permitido.", StatusCodes.Status400BadRequest);
 
-        if (purpose.Length > 1000 || functions.Length > 4000 || knowledge.Length > 2000 || axes.Length > 1000)
+        if (purpose.Length > 8000 || functions.Length > 8000 || knowledge.Length > 8000 || axes.Length > 1000)
             return Result<MeritExamResponse>.Fail("El manual supera el tamaño permitido.", StatusCodes.Status400BadRequest);
 
         if (purpose.Length + functions.Length + knowledge.Length < 40)
-            return Result<MeritExamResponse>.Fail("Pega el propósito, las funciones o los conocimientos del manual de la OPEC.", StatusCodes.Status400BadRequest);
+            return Result<MeritExamResponse>.Fail("Sube el manual y la OPEC, o pega el propósito, las funciones o los conocimientos.", StatusCodes.Status400BadRequest);
 
         var drafts = MeritExamGenerator.Build(new MeritExamSource(level, call, opec, job, purpose, functions, knowledge, axes));
         if (drafts.Count == 0)
@@ -94,8 +115,8 @@ public sealed class MeritExamService : IMeritExamService
             CorrectIndex = draft.CorrectIndex
         }).ToArray();
 
-        var grade = string.IsNullOrWhiteSpace(request.Grade) ? string.Empty : $" grado {request.Grade.Trim()}";
-        var title = $"{job}{grade} · OPEC {opec}";
+        var gradeLabel = string.IsNullOrWhiteSpace(grade) ? string.Empty : $" grado {grade}";
+        var title = $"{job}{gradeLabel} · OPEC {opec}";
         var response = new MeritExamResponse
         {
             Title = title,

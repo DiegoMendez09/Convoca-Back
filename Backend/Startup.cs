@@ -25,6 +25,10 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers();
+        services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = 33_554_432;
+        });
         services.AddOpenApi();
 
         services.AddOptions<ConvocaOptions>()
@@ -64,6 +68,7 @@ public class Startup
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IMeritExamService, MeritExamService>();
+        services.AddScoped<IFunctionManualService, FunctionManualService>();
 
         var connectionString = _configuration.GetConnectionString("ConvocaDb");
         if (!string.IsNullOrWhiteSpace(connectionString))

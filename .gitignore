@@ -491,3 +491,6 @@ $RECYCLE.BIN/
 # Local overrides (tokens, connection strings)
 appsettings.Local.json
 appsettings.*.local.json
+
+# Manuales PDF subidos
+App_Data/

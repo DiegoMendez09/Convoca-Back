@@ -51,7 +51,27 @@ public static class DatabaseInitializer
                     );
                 END
                 """);
-            logger.LogInformation("La base de favoritos, perfil y exámenes está lista.");
+            await context.Database.ExecuteSqlRawAsync(
+                """
+                IF OBJECT_ID(N'dbo.FunctionManuals', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.FunctionManuals
+                    (
+                        ManualId uniqueidentifier NOT NULL CONSTRAINT PK_FunctionManuals PRIMARY KEY,
+                        OriginalFileName nvarchar(260) NOT NULL,
+                        OpecCode nvarchar(40) NOT NULL,
+                        JobTitle nvarchar(200) NOT NULL,
+                        Level nvarchar(40) NOT NULL,
+                        Grade nvarchar(20) NOT NULL,
+                        Purpose nvarchar(max) NOT NULL,
+                        Functions nvarchar(max) NOT NULL,
+                        Knowledge nvarchar(max) NOT NULL,
+                        SectionText nvarchar(max) NOT NULL,
+                        UploadedOn datetime2 NOT NULL
+                    );
+                END
+                """);
+            logger.LogInformation("La base de favoritos, perfil, exámenes y manuales está lista.");
         }
         catch (Exception exception)
         {
