@@ -11,8 +11,11 @@ public sealed class SecopDbContext : DbContext
 
     public DbSet<Favorite> Favorites => Set<Favorite>();
 
+    public DbSet<ProfessionalProfile> ProfessionalProfiles => Set<ProfessionalProfile>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new FavoriteConfiguration());
+        modelBuilder.ApplyConfiguration(new ProfessionalProfileConfiguration());
     }
 }

@@ -36,6 +36,15 @@ public static class SecopQueryBuilder
             clauses.Add($"({SecopFields.Awarded} IS NULL OR {SecopFields.Awarded} = 'No')");
             clauses.Add(
                 $"({SecopFields.SupplierName} IS NULL OR {SecopFields.SupplierName} = 'No Definido')");
+            clauses.Add($"{SecopFields.OffersDueOn} IS NOT NULL");
+            clauses.Add(SubscribableModalityClause());
+            clauses.Add($"{SecopFields.Modality} = 'Mínima cuantía'");
+            clauses.Add($"{SecopFields.ContractType} = 'Prestación de servicios'");
+            if (criteria.OffersDueFrom is not null)
+            {
+                var dueFrom = criteria.OffersDueFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                clauses.Add($"{SecopFields.OffersDueOn} >= '{dueFrom}T00:00:00'");
+            }
         }
         else
         {
@@ -65,6 +74,8 @@ public static class SecopQueryBuilder
             clauses.Add(
                 $"{SecopFields.BasePrice} <= {criteria.MaxBasePrice.Value.ToString(CultureInfo.InvariantCulture)}");
         }
+
+        AddProfilePhrases(clauses, criteria.ProfilePhrases);
 
         return string.Join(" AND ", clauses);
     }
@@ -110,6 +121,42 @@ public static class SecopQueryBuilder
 
         clauses.Add($"{column} like {ContainsLiteral(value)}");
     }
+
+    private static string SubscribableModalityClause()
+    {
+        var excluded = new[]
+        {
+            "Contratación régimen especial",
+            "Contratación directa",
+            "Solicitud de información a los Proveedores"
+        };
+
+        var parts = excluded.Select(modality =>
+            $"{SecopFields.Modality} != {Literal(modality)}");
+        return string.Join(" AND ", parts);
+    }
+
+    private static void AddProfilePhrases(List<string> clauses, IReadOnlyList<string>? phrases)
+    {
+        if (phrases is null || phrases.Count == 0)
+            return;
+
+        var parts = new List<string>();
+        foreach (var phrase in phrases.Take(4))
+        {
+            if (string.IsNullOrWhiteSpace(phrase))
+                continue;
+
+            var literal = ContainsLiteral(phrase);
+            parts.Add(
+                $"({SecopFields.ProcedureName} like {literal} OR {SecopFields.Description} like {literal})");
+        }
+
+        if (parts.Count == 0)
+            return;
+
+        clauses.Add("(" + string.Join(" OR ", parts) + ")");
+    }
 }
 
 public sealed record ProcessSearchCriteria
@@ -143,6 +190,10 @@ public sealed record ProcessSearchCriteria
     public bool PublishedOnly { get; init; } = true;
 
     public bool OpenForOffer { get; init; }
+
+    public DateTime? OffersDueFrom { get; init; }
+
+    public IReadOnlyList<string> ProfilePhrases { get; init; } = [];
 }
 
 public static class SecopValueParser

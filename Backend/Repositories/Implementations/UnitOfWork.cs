@@ -7,6 +7,7 @@ public sealed class UnitOfWork : IUnitOfWork
 {
     private readonly SecopDbContext _context;
     private IFavoriteRepository? _favorites;
+    private IProfileRepository? _profiles;
 
     public UnitOfWork(SecopDbContext context)
     {
@@ -14,6 +15,8 @@ public sealed class UnitOfWork : IUnitOfWork
     }
 
     public IFavoriteRepository Favorites => _favorites ??= new FavoriteRepository(_context);
+
+    public IProfileRepository Profiles => _profiles ??= new ProfileRepository(_context);
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

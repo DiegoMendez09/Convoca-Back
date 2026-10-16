@@ -14,12 +14,18 @@ public sealed class ProcessService : IProcessService
     private readonly ISecopApiClient _secopApiClient;
     private readonly IMapper _mapper;
     private readonly ILogger<ProcessService> _logger;
+    private readonly IProfileService? _profileService;
 
-    public ProcessService(ISecopApiClient secopApiClient, IMapper mapper, ILogger<ProcessService> logger)
+    public ProcessService(
+        ISecopApiClient secopApiClient,
+        IMapper mapper,
+        ILogger<ProcessService> logger,
+        IProfileService? profileService = null)
     {
         _secopApiClient = secopApiClient;
         _mapper = mapper;
         _logger = logger;
+        _profileService = profileService;
     }
 
     public async Task<Result<PaginationResponse<ProcessResponse>>> SearchAsync(
@@ -32,7 +38,8 @@ public sealed class ProcessService : IProcessService
 
         try
         {
-            var criteria = ToCriteria(request);
+            var (profileKeyword, profilePhrases) = await ApplyProfileAsync(request, cancellationToken);
+            var criteria = ToCriteria(request) with { ProfilePhrases = profilePhrases };
             var where = SecopQueryBuilder.BuildWhere(criteria);
             var offset = (request.PageNumber - 1) * request.PageSize;
             var records = await _secopApiClient.SearchAsync(
@@ -54,7 +61,8 @@ public sealed class ProcessService : IProcessService
                 PageSize = request.PageSize,
                 TotalRecords = items.Count == 0 ? 0 : offset + items.Count,
                 TotalPages = hasMore ? request.PageNumber + 1 : request.PageNumber,
-                HasMore = hasMore
+                HasMore = hasMore,
+                ProfileKeyword = profileKeyword
             });
         }
         catch (Exception exception) when (IsUpstreamFailure(exception, cancellationToken))
@@ -114,7 +122,8 @@ public sealed class ProcessService : IProcessService
 
         try
         {
-            var criteria = ToCriteria(request);
+            var (_, profilePhrases) = await ApplyProfileAsync(request, cancellationToken);
+            var criteria = ToCriteria(request) with { ProfilePhrases = profilePhrases };
             var where = SecopQueryBuilder.BuildWhere(criteria);
             var recordsTask = _secopApiClient.SearchAsync(
                 where,
@@ -144,6 +153,25 @@ public sealed class ProcessService : IProcessService
         }
     }
 
+    private async Task<(string? Display, IReadOnlyList<string> Phrases)> ApplyProfileAsync(
+        ProcessSearchRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (_profileService is null)
+            return (null, []);
+
+        var profile = await _profileService.GetAsync(cancellationToken);
+        if (!profile.IsSuccess || profile.Value is null || !profile.Value.UseForSearch)
+            return (null, []);
+
+        var phrases = ProfileSearchText.Phrases(profile.Value.Title, profile.Value.Experience, profile.Value.Keywords);
+        if (phrases.Count == 0)
+            return (null, []);
+
+        request.Keyword = null;
+        return (ProfileSearchText.Build(profile.Value.Title, profile.Value.Experience, profile.Value.Keywords), phrases);
+    }
+
     internal static ProcessSearchCriteria ToCriteria(ProcessSearchRequest request)
     {
         return new ProcessSearchCriteria
@@ -162,7 +190,10 @@ public sealed class ProcessService : IProcessService
             MinBasePrice = request.MinBasePrice,
             MaxBasePrice = request.MaxBasePrice,
             PublishedOnly = request.PublishedOnly ?? true,
-            OpenForOffer = request.OpenForOffer ?? false
+            OpenForOffer = request.OpenForOffer ?? false,
+            OffersDueFrom = request.OpenForOffer == true
+                ? DateTime.UtcNow.AddHours(-5).Date
+                : null
         };
     }
 

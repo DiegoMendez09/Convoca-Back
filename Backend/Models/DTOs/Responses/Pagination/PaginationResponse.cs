@@ -13,4 +13,6 @@ public sealed class PaginationResponse<T>
     public int TotalPages { get; set; }
 
     public bool HasMore { get; set; }
+
+    public string? ProfileKeyword { get; set; }
 }

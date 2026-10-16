@@ -62,6 +62,7 @@ public class Startup
         });
 
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IProfileService, ProfileService>();
 
         var connectionString = _configuration.GetConnectionString("SecopDb");
         if (!string.IsNullOrWhiteSpace(connectionString))

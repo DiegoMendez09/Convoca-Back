@@ -32,4 +32,5 @@ public static class SecopFields
     public const string ProcessId = "id_del_proceso";
     public const string Awarded = "adjudicado";
     public const string SupplierName = "nombre_del_proveedor";
+    public const string OffersDueOn = "fecha_de_recepcion_de";
 }

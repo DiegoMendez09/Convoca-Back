@@ -19,7 +19,22 @@ public static class DatabaseInitializer
         try
         {
             await context.Database.EnsureCreatedAsync();
-            logger.LogInformation("La base de favoritos y borradores está lista.");
+            await context.Database.ExecuteSqlRawAsync(
+                """
+                IF OBJECT_ID(N'dbo.ProfessionalProfiles', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.ProfessionalProfiles
+                    (
+                        ProfileId int NOT NULL CONSTRAINT PK_ProfessionalProfiles PRIMARY KEY,
+                        Title nvarchar(200) NOT NULL,
+                        Experience nvarchar(2000) NOT NULL,
+                        Keywords nvarchar(300) NOT NULL,
+                        UseForSearch bit NOT NULL,
+                        UpdatedOn datetime2 NOT NULL
+                    );
+                END
+                """);
+            logger.LogInformation("La base de favoritos y perfil está lista.");
         }
         catch (Exception exception)
         {
