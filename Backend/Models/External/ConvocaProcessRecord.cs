@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Backend.Models.External;
 
-public sealed class SecopProcessRecord
+public sealed class ConvocaProcessRecord
 {
     [JsonPropertyName("id_del_proceso")]
     public string? ProcessId { get; set; }
@@ -81,11 +81,11 @@ public sealed class SecopProcessRecord
     public string? ContractType { get; set; }
 
     [JsonPropertyName("urlproceso")]
-    [JsonConverter(typeof(SecopUrlJsonConverter))]
+    [JsonConverter(typeof(ConvocaUrlJsonConverter))]
     public string? ProcessUrl { get; set; }
 }
 
-public sealed class SecopUrlJsonConverter : JsonConverter<string?>
+public sealed class ConvocaUrlJsonConverter : JsonConverter<string?>
 {
     public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

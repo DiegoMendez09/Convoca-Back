@@ -1,6 +1,6 @@
 namespace Backend.Clients;
 
-public static class SecopFields
+public static class ConvocaFields
 {
     public const string SelectList =
         "id_del_proceso,referencia_del_proceso,entidad,nit_entidad,departamento_entidad,ciudad_entidad," +

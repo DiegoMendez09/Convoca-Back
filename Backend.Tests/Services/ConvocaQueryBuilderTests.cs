@@ -2,12 +2,12 @@ using Backend.Services;
 
 namespace Backend.Tests.Services;
 
-public class SecopQueryBuilderTests
+public class ConvocaQueryBuilderTests
 {
     [Fact]
     public void BuildWhere_WhenPublishedOnly_ExcludesDraftsAndRequiresPublicationDate()
     {
-        var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria());
+        var where = ConvocaQueryBuilder.BuildWhere(new ProcessSearchCriteria());
 
         Assert.Contains("fecha_de_publicacion_del IS NOT NULL", where, StringComparison.Ordinal);
         Assert.Contains("estado_del_procedimiento != 'Borrador'", where, StringComparison.Ordinal);
@@ -16,20 +16,20 @@ public class SecopQueryBuilderTests
     [Fact]
     public void BuildFullText_WhenKeywordContainsQuote_KeepsSearchableText()
     {
-        var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria
+        var where = ConvocaQueryBuilder.BuildWhere(new ProcessSearchCriteria
         {
             Keyword = "O'Brien",
             PublishedOnly = false
         });
 
         Assert.Equal(string.Empty, where);
-        Assert.Equal("OBrien", SecopQueryBuilder.BuildFullText("O'Brien"));
+        Assert.Equal("OBrien", ConvocaQueryBuilder.BuildFullText("O'Brien"));
     }
 
     [Fact]
     public void BuildWhere_WhenDatesAndPriceAreSet_AddsBoundedClauses()
     {
-        var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria
+        var where = ConvocaQueryBuilder.BuildWhere(new ProcessSearchCriteria
         {
             PublishedFrom = new DateTime(2026, 1, 2),
             PublishedTo = new DateTime(2026, 3, 4),
@@ -47,7 +47,7 @@ public class SecopQueryBuilderTests
     [Fact]
     public void BuildWhere_WhenOpenForOffer_RequiresPublishedStatusAndNoSupplier()
     {
-        var where = SecopQueryBuilder.BuildWhere(new ProcessSearchCriteria
+        var where = ConvocaQueryBuilder.BuildWhere(new ProcessSearchCriteria
         {
             OpenForOffer = true,
             Status = "Adjudicado",
@@ -63,7 +63,7 @@ public class SecopQueryBuilderTests
     [Fact]
     public void BuildProcessIdWhere_ReturnsExactMatch()
     {
-        var where = SecopQueryBuilder.BuildProcessIdWhere("CO1.REQ.10");
+        var where = ConvocaQueryBuilder.BuildProcessIdWhere("CO1.REQ.10");
 
         Assert.Equal("id_del_proceso = 'CO1.REQ.10'", where);
     }
@@ -74,6 +74,6 @@ public class SecopQueryBuilderTests
     [InlineData("", false)]
     public void IsSafeProcessId_RejectsInjectionCharacters(string processId, bool expected)
     {
-        Assert.Equal(expected, SecopValueParser.IsSafeProcessId(processId));
+        Assert.Equal(expected, ConvocaValueParser.IsSafeProcessId(processId));
     }
 }

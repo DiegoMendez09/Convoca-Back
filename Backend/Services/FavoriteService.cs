@@ -36,7 +36,7 @@ public sealed class FavoriteService : IFavoriteService
             return Unavailable<FavoriteResponse>();
 
         var processId = request.ProcessId?.Trim() ?? string.Empty;
-        if (!SecopValueParser.IsSafeProcessId(processId))
+        if (!ConvocaValueParser.IsSafeProcessId(processId))
             return Result<FavoriteResponse>.Fail("El identificador del proceso no es válido.", StatusCodes.Status400BadRequest);
 
         if (request.Notes is not null && request.Notes.Trim().Length > 500)
@@ -75,7 +75,7 @@ public sealed class FavoriteService : IFavoriteService
         if (_unitOfWork is null)
             return Unavailable<bool>();
 
-        if (!SecopValueParser.IsSafeProcessId(processId))
+        if (!ConvocaValueParser.IsSafeProcessId(processId))
             return Result<bool>.Fail("El identificador del proceso no es válido.", StatusCodes.Status400BadRequest);
 
         var favorite = await _unitOfWork.Favorites.GetByProcessIdAsync(processId, cancellationToken);
@@ -90,7 +90,7 @@ public sealed class FavoriteService : IFavoriteService
     private static Result<T> Unavailable<T>()
     {
         return Result<T>.Fail(
-            "La base de Azure no está configurada. Define ConnectionStrings:SecopDb.",
+            "La base de Azure no está configurada. Define ConnectionStrings:ConvocaDb.",
             StatusCodes.Status503ServiceUnavailable);
     }
 }

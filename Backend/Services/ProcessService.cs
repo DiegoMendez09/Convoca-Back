@@ -11,18 +11,18 @@ namespace Backend.Services;
 
 public sealed class ProcessService : IProcessService
 {
-    private readonly ISecopApiClient _secopApiClient;
+    private readonly IConvocaApiClient _convocaApiClient;
     private readonly IMapper _mapper;
     private readonly ILogger<ProcessService> _logger;
     private readonly IProfileService? _profileService;
 
     public ProcessService(
-        ISecopApiClient secopApiClient,
+        IConvocaApiClient convocaApiClient,
         IMapper mapper,
         ILogger<ProcessService> logger,
         IProfileService? profileService = null)
     {
-        _secopApiClient = secopApiClient;
+        _convocaApiClient = convocaApiClient;
         _mapper = mapper;
         _logger = logger;
         _profileService = profileService;
@@ -40,11 +40,11 @@ public sealed class ProcessService : IProcessService
         {
             var (profileKeyword, profilePhrases) = await ApplyProfileAsync(request, cancellationToken);
             var criteria = ToCriteria(request) with { ProfilePhrases = profilePhrases };
-            var where = SecopQueryBuilder.BuildWhere(criteria);
+            var where = ConvocaQueryBuilder.BuildWhere(criteria);
             var offset = (request.PageNumber - 1) * request.PageSize;
-            var records = await _secopApiClient.SearchAsync(
+            var records = await _convocaApiClient.SearchAsync(
                 where,
-                SecopQueryBuilder.BuildFullText(criteria.Keyword),
+                ConvocaQueryBuilder.BuildFullText(criteria.Keyword),
                 request.PageSize + 1,
                 offset,
                 compact: true,
@@ -67,16 +67,16 @@ public sealed class ProcessService : IProcessService
         }
         catch (Exception exception) when (IsUpstreamFailure(exception, cancellationToken))
         {
-            _logger.LogError(exception, "Error consultando procesos de SECOP II");
+            _logger.LogError(exception, "convocaApp no pudo consultar los procesos");
             return Result<PaginationResponse<ProcessResponse>>.Fail(
-                "No fue posible consultar los procesos de SECOP II.",
+                "convocaApp no pudo consultar los procesos de contratación.",
                 StatusCodes.Status502BadGateway);
         }
     }
 
     public async Task<Result<ProcessResponse>> GetByIdAsync(string processId, CancellationToken cancellationToken)
     {
-        if (!SecopValueParser.IsSafeProcessId(processId))
+        if (!ConvocaValueParser.IsSafeProcessId(processId))
         {
             return Result<ProcessResponse>.Fail(
                 "El identificador del proceso no es válido.",
@@ -85,8 +85,8 @@ public sealed class ProcessService : IProcessService
 
         try
         {
-            var records = await _secopApiClient.SearchAsync(
-                SecopQueryBuilder.BuildProcessIdWhere(processId),
+            var records = await _convocaApiClient.SearchAsync(
+                ConvocaQueryBuilder.BuildProcessIdWhere(processId),
                 fullText: null,
                 limit: 1,
                 offset: 0,
@@ -107,7 +107,7 @@ public sealed class ProcessService : IProcessService
         {
             _logger.LogError(exception, "Error consultando el proceso {ProcessId}", processId);
             return Result<ProcessResponse>.Fail(
-                "No fue posible consultar el proceso en SECOP II.",
+                "convocaApp no pudo consultar este proceso.",
                 StatusCodes.Status502BadGateway);
         }
     }
@@ -124,15 +124,15 @@ public sealed class ProcessService : IProcessService
         {
             var (_, profilePhrases) = await ApplyProfileAsync(request, cancellationToken);
             var criteria = ToCriteria(request) with { ProfilePhrases = profilePhrases };
-            var where = SecopQueryBuilder.BuildWhere(criteria);
-            var recordsTask = _secopApiClient.SearchAsync(
+            var where = ConvocaQueryBuilder.BuildWhere(criteria);
+            var recordsTask = _convocaApiClient.SearchAsync(
                 where,
-                SecopQueryBuilder.BuildFullText(criteria.Keyword),
-                SecopQueryBuilder.MaxExportSize,
+                ConvocaQueryBuilder.BuildFullText(criteria.Keyword),
+                ConvocaQueryBuilder.MaxExportSize,
                 0,
                 compact: false,
                 cancellationToken);
-            var countTask = _secopApiClient.CountAsync(where, cancellationToken);
+            var countTask = _convocaApiClient.CountAsync(where, cancellationToken);
             await Task.WhenAll(recordsTask, countTask);
 
             var items = _mapper.Map<List<ProcessResponse>>(await recordsTask);
@@ -140,15 +140,15 @@ public sealed class ProcessService : IProcessService
 
             return Result<ProcessExportFile>.Ok(new ProcessExportFile(
                 ProcessCsvFormatter.Format(items),
-                "procesos-secop-ii.csv",
+                "convoca-processes.csv",
                 totalRecords > items.Count,
                 items.Count));
         }
         catch (Exception exception) when (IsUpstreamFailure(exception, cancellationToken))
         {
-            _logger.LogError(exception, "Error exportando procesos de SECOP II");
+            _logger.LogError(exception, "convocaApp no pudo exportar los procesos");
             return Result<ProcessExportFile>.Fail(
-                "No fue posible exportar los procesos de SECOP II.",
+                "convocaApp no pudo exportar los procesos.",
                 StatusCodes.Status502BadGateway);
         }
     }
@@ -233,16 +233,16 @@ public sealed class ProcessService : IProcessService
         if (request.PageNumber < 1)
             return "El número de página debe ser mayor a cero.";
 
-        if (request.PageSize is < 1 or > SecopQueryBuilder.MaxPageSize)
-            return $"El tamaño de página debe estar entre 1 y {SecopQueryBuilder.MaxPageSize}.";
+        if (request.PageSize is < 1 or > ConvocaQueryBuilder.MaxPageSize)
+            return $"El tamaño de página debe estar entre 1 y {ConvocaQueryBuilder.MaxPageSize}.";
 
         return null;
     }
 
     private static string? ValidateText(string? value, string label)
     {
-        if (value is { Length: > SecopQueryBuilder.MaxTextLength })
-            return $"{label} no puede superar {SecopQueryBuilder.MaxTextLength} caracteres.";
+        if (value is { Length: > ConvocaQueryBuilder.MaxTextLength })
+            return $"{label} no puede superar {ConvocaQueryBuilder.MaxTextLength} caracteres.";
 
         return null;
     }
@@ -252,6 +252,6 @@ public sealed class ProcessService : IProcessService
         if (exception is OperationCanceledException && cancellationToken.IsCancellationRequested)
             return false;
 
-        return exception is HttpRequestException or SecopUnavailableException or TaskCanceledException or JsonException;
+        return exception is HttpRequestException or ConvocaUnavailableException or TaskCanceledException or JsonException;
     }
 }

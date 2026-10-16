@@ -5,7 +5,7 @@ using Backend.Models.DTOs.Responses;
 
 namespace Backend.Services;
 
-public static class SecopQueryBuilder
+public static class ConvocaQueryBuilder
 {
     public const int MaxPageSize = 50;
     public const int DefaultPageSize = 20;
@@ -18,61 +18,61 @@ public static class SecopQueryBuilder
 
         if (criteria.PublishedOnly)
         {
-            clauses.Add($"{SecopFields.PublishedOn} IS NOT NULL");
-            clauses.Add($"{SecopFields.Status} != 'Borrador'");
+            clauses.Add($"{ConvocaFields.PublishedOn} IS NOT NULL");
+            clauses.Add($"{ConvocaFields.Status} != 'Borrador'");
         }
 
-        AddContains(clauses, SecopFields.EntityName, criteria.EntityName);
-        AddContains(clauses, SecopFields.EntityNit, criteria.EntityNit);
-        AddContains(clauses, SecopFields.Department, criteria.Department);
-        AddContains(clauses, SecopFields.City, criteria.City);
-        AddContains(clauses, SecopFields.Modality, criteria.Modality);
-        AddContains(clauses, SecopFields.Phase, criteria.Phase);
-        AddContains(clauses, SecopFields.ContractType, criteria.ContractType);
+        AddContains(clauses, ConvocaFields.EntityName, criteria.EntityName);
+        AddContains(clauses, ConvocaFields.EntityNit, criteria.EntityNit);
+        AddContains(clauses, ConvocaFields.Department, criteria.Department);
+        AddContains(clauses, ConvocaFields.City, criteria.City);
+        AddContains(clauses, ConvocaFields.Modality, criteria.Modality);
+        AddContains(clauses, ConvocaFields.Phase, criteria.Phase);
+        AddContains(clauses, ConvocaFields.ContractType, criteria.ContractType);
 
         if (criteria.OpenForOffer)
         {
-            clauses.Add($"{SecopFields.Status} = 'Publicado'");
-            clauses.Add($"({SecopFields.Awarded} IS NULL OR {SecopFields.Awarded} = 'No')");
+            clauses.Add($"{ConvocaFields.Status} = 'Publicado'");
+            clauses.Add($"({ConvocaFields.Awarded} IS NULL OR {ConvocaFields.Awarded} = 'No')");
             clauses.Add(
-                $"({SecopFields.SupplierName} IS NULL OR {SecopFields.SupplierName} = 'No Definido')");
-            clauses.Add($"{SecopFields.OffersDueOn} IS NOT NULL");
+                $"({ConvocaFields.SupplierName} IS NULL OR {ConvocaFields.SupplierName} = 'No Definido')");
+            clauses.Add($"{ConvocaFields.OffersDueOn} IS NOT NULL");
             clauses.Add(SubscribableModalityClause());
-            clauses.Add($"{SecopFields.Modality} = 'Mínima cuantía'");
-            clauses.Add($"{SecopFields.ContractType} = 'Prestación de servicios'");
+            clauses.Add($"{ConvocaFields.Modality} = 'Mínima cuantía'");
+            clauses.Add($"{ConvocaFields.ContractType} = 'Prestación de servicios'");
             if (criteria.OffersDueFrom is not null)
             {
                 var dueFrom = criteria.OffersDueFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                clauses.Add($"{SecopFields.OffersDueOn} >= '{dueFrom}T00:00:00'");
+                clauses.Add($"{ConvocaFields.OffersDueOn} >= '{dueFrom}T00:00:00'");
             }
         }
         else
         {
-            AddContains(clauses, SecopFields.Status, criteria.Status);
+            AddContains(clauses, ConvocaFields.Status, criteria.Status);
         }
 
         if (criteria.PublishedFrom is not null)
         {
             var from = criteria.PublishedFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            clauses.Add($"{SecopFields.PublishedOn} >= '{from}T00:00:00'");
+            clauses.Add($"{ConvocaFields.PublishedOn} >= '{from}T00:00:00'");
         }
 
         if (criteria.PublishedTo is not null)
         {
             var to = criteria.PublishedTo.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            clauses.Add($"{SecopFields.PublishedOn} <= '{to}T23:59:59'");
+            clauses.Add($"{ConvocaFields.PublishedOn} <= '{to}T23:59:59'");
         }
 
         if (criteria.MinBasePrice is not null)
         {
             clauses.Add(
-                $"{SecopFields.BasePrice} >= {criteria.MinBasePrice.Value.ToString(CultureInfo.InvariantCulture)}");
+                $"{ConvocaFields.BasePrice} >= {criteria.MinBasePrice.Value.ToString(CultureInfo.InvariantCulture)}");
         }
 
         if (criteria.MaxBasePrice is not null)
         {
             clauses.Add(
-                $"{SecopFields.BasePrice} <= {criteria.MaxBasePrice.Value.ToString(CultureInfo.InvariantCulture)}");
+                $"{ConvocaFields.BasePrice} <= {criteria.MaxBasePrice.Value.ToString(CultureInfo.InvariantCulture)}");
         }
 
         AddProfilePhrases(clauses, criteria.ProfilePhrases);
@@ -82,7 +82,7 @@ public static class SecopQueryBuilder
 
     public static string BuildProcessIdWhere(string processId)
     {
-        return $"{SecopFields.ProcessId} = {Literal(processId)}";
+        return $"{ConvocaFields.ProcessId} = {Literal(processId)}";
     }
 
     public static string Literal(string value)
@@ -132,7 +132,7 @@ public static class SecopQueryBuilder
         };
 
         var parts = excluded.Select(modality =>
-            $"{SecopFields.Modality} != {Literal(modality)}");
+            $"{ConvocaFields.Modality} != {Literal(modality)}");
         return string.Join(" AND ", parts);
     }
 
@@ -149,7 +149,7 @@ public static class SecopQueryBuilder
 
             var literal = ContainsLiteral(phrase);
             parts.Add(
-                $"({SecopFields.ProcedureName} like {literal} OR {SecopFields.Description} like {literal})");
+                $"({ConvocaFields.ProcedureName} like {literal} OR {ConvocaFields.Description} like {literal})");
         }
 
         if (parts.Count == 0)
@@ -196,7 +196,7 @@ public sealed record ProcessSearchCriteria
     public IReadOnlyList<string> ProfilePhrases { get; init; } = [];
 }
 
-public static class SecopValueParser
+public static class ConvocaValueParser
 {
     private static readonly HashSet<string> EmptySentinels = new(StringComparer.OrdinalIgnoreCase)
     {

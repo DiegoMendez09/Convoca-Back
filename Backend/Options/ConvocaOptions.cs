@@ -1,8 +1,8 @@
 namespace Backend.Options;
 
-public sealed class SecopOptions
+public sealed class ConvocaOptions
 {
-    public const string SectionName = "Secop";
+    public const string SectionName = "Convoca";
 
     public string BaseUrl { get; set; } = string.Empty;
 

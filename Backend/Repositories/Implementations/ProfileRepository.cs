@@ -8,9 +8,9 @@ public sealed class ProfileRepository : IProfileRepository
 {
     public const int SingleProfileId = 1;
 
-    private readonly SecopDbContext _context;
+    private readonly ConvocaDbContext _context;
 
-    public ProfileRepository(SecopDbContext context)
+    public ProfileRepository(ConvocaDbContext context)
     {
         _context = context;
     }

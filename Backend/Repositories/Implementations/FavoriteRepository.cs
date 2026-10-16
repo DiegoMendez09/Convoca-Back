@@ -6,9 +6,9 @@ namespace Backend.Repositories.Implementations;
 
 public sealed class FavoriteRepository : IFavoriteRepository
 {
-    private readonly SecopDbContext _context;
+    private readonly ConvocaDbContext _context;
 
-    public FavoriteRepository(SecopDbContext context)
+    public FavoriteRepository(ConvocaDbContext context)
     {
         _context = context;
     }

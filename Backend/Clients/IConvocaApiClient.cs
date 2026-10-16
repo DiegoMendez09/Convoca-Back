@@ -2,9 +2,9 @@ using Backend.Models.External;
 
 namespace Backend.Clients;
 
-public interface ISecopApiClient
+public interface IConvocaApiClient
 {
-    Task<IReadOnlyList<SecopProcessRecord>> SearchAsync(
+    Task<IReadOnlyList<ConvocaProcessRecord>> SearchAsync(
         string where,
         string? fullText,
         int limit,

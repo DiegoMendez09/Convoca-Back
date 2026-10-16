@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>secop-ii-backend</UserSecretsId>
+    <UserSecretsId>convoca-app-backend</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

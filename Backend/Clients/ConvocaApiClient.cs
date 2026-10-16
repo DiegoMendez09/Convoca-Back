@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Backend.Clients;
 
-public sealed class SecopApiClient : ISecopApiClient
+public sealed class ConvocaApiClient : IConvocaApiClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -14,17 +14,17 @@ public sealed class SecopApiClient : ISecopApiClient
     };
 
     private readonly HttpClient _httpClient;
-    private readonly SecopOptions _options;
-    private readonly ILogger<SecopApiClient> _logger;
+    private readonly ConvocaOptions _options;
+    private readonly ILogger<ConvocaApiClient> _logger;
 
-    public SecopApiClient(HttpClient httpClient, IOptions<SecopOptions> options, ILogger<SecopApiClient> logger)
+    public ConvocaApiClient(HttpClient httpClient, IOptions<ConvocaOptions> options, ILogger<ConvocaApiClient> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<SecopProcessRecord>> SearchAsync(
+    public async Task<IReadOnlyList<ConvocaProcessRecord>> SearchAsync(
         string where,
         string? fullText,
         int limit,
@@ -34,8 +34,8 @@ public sealed class SecopApiClient : ISecopApiClient
     {
         var query = new Dictionary<string, string?>
         {
-            ["$select"] = compact ? SecopFields.ListSelect : SecopFields.SelectList,
-            ["$order"] = $"{SecopFields.PublishedOn} DESC",
+            ["$select"] = compact ? ConvocaFields.ListSelect : ConvocaFields.SelectList,
+            ["$order"] = $"{ConvocaFields.PublishedOn} DESC",
             ["$limit"] = limit.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["$offset"] = offset.ToString(System.Globalization.CultureInfo.InvariantCulture)
         };
@@ -47,7 +47,7 @@ public sealed class SecopApiClient : ISecopApiClient
             query["$q"] = fullText;
 
         var body = await GetStringAsync(query, cancellationToken);
-        var records = JsonSerializer.Deserialize<List<SecopProcessRecord>>(body, JsonOptions);
+        var records = JsonSerializer.Deserialize<List<ConvocaProcessRecord>>(body, JsonOptions);
         return records ?? [];
     }
 
@@ -77,10 +77,10 @@ public sealed class SecopApiClient : ISecopApiClient
             return body;
 
         _logger.LogError(
-            "SECOP II respondió {StatusCode}. Cuerpo: {Body}",
+            "La fuente de contratación respondió {StatusCode}. Cuerpo: {Body}",
             (int)response.StatusCode,
             body);
-        throw new SecopUnavailableException("No fue posible consultar los procesos de SECOP II.");
+        throw new ConvocaUnavailableException("convocaApp no pudo consultar los procesos de contratación.");
     }
 
     private static int ReadCount(string json)
@@ -106,9 +106,9 @@ public sealed class SecopApiClient : ISecopApiClient
     }
 }
 
-public sealed class SecopUnavailableException : Exception
+public sealed class ConvocaUnavailableException : Exception
 {
-    public SecopUnavailableException(string message) : base(message)
+    public ConvocaUnavailableException(string message) : base(message)
     {
     }
 }

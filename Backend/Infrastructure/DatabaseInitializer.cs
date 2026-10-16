@@ -8,7 +8,7 @@ public static class DatabaseInitializer
     public static async Task InitializeAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
-        var context = scope.ServiceProvider.GetService<SecopDbContext>();
+        var context = scope.ServiceProvider.GetService<ConvocaDbContext>();
         if (context is null)
             return;
 
@@ -34,13 +34,30 @@ public static class DatabaseInitializer
                     );
                 END
                 """);
-            logger.LogInformation("La base de favoritos y perfil está lista.");
+            await context.Database.ExecuteSqlRawAsync(
+                """
+                IF OBJECT_ID(N'dbo.MeritExams', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.MeritExams
+                    (
+                        ExamId uniqueidentifier NOT NULL CONSTRAINT PK_MeritExams PRIMARY KEY,
+                        Title nvarchar(240) NOT NULL,
+                        Level nvarchar(40) NOT NULL,
+                        OpecCode nvarchar(40) NOT NULL,
+                        CallNumber nvarchar(80) NOT NULL,
+                        JobTitle nvarchar(200) NOT NULL,
+                        QuestionsJson nvarchar(max) NOT NULL,
+                        CreatedOn datetime2 NOT NULL
+                    );
+                END
+                """);
+            logger.LogInformation("La base de favoritos, perfil y exámenes está lista.");
         }
         catch (Exception exception)
         {
             logger.LogError(
                 exception,
-                "No se pudo preparar la base de Azure. Revisa ConnectionStrings:SecopDb. La consulta de SECOP sigue disponible.");
+                "convocaApp no pudo preparar la base de Azure. Revisa ConnectionStrings:ConvocaDb. La búsqueda de procesos sigue disponible.");
         }
     }
 }

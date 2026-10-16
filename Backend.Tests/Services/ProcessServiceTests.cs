@@ -11,7 +11,7 @@ namespace Backend.Tests.Services;
 
 public class ProcessServiceTests
 {
-    private readonly Mock<ISecopApiClient> _client = new();
+    private readonly Mock<IConvocaApiClient> _client = new();
     private readonly ProcessService _service;
 
     public ProcessServiceTests()
@@ -54,7 +54,7 @@ public class ProcessServiceTests
             .Callback<string, string?, int, int, bool, CancellationToken>((where, _, _, _, _, _) => capturedWhere = where)
             .ReturnsAsync(
             [
-                new SecopProcessRecord
+                new ConvocaProcessRecord
                 {
                     ProcessId = "CO1.REQ.10",
                     EntityName = "Hospital",
@@ -88,7 +88,7 @@ public class ProcessServiceTests
                 It.IsAny<int>(),
                 It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new SecopUnavailableException("down"));
+            .ThrowsAsync(new ConvocaUnavailableException("down"));
 
         var result = await _service.SearchAsync(new ProcessSearchRequest(), CancellationToken.None);
 

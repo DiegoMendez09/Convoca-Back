@@ -27,11 +27,11 @@ public class Startup
         services.AddControllers();
         services.AddOpenApi();
 
-        services.AddOptions<SecopOptions>()
-            .Bind(_configuration.GetSection(SecopOptions.SectionName))
-            .Validate(options => !string.IsNullOrWhiteSpace(options.BaseUrl), "Secop:BaseUrl es requerido.")
-            .Validate(options => !string.IsNullOrWhiteSpace(options.DatasetId), "Secop:DatasetId es requerido.")
-            .Validate(options => options.TimeoutSeconds > 0, "Secop:TimeoutSeconds debe ser mayor a cero.")
+        services.AddOptions<ConvocaOptions>()
+            .Bind(_configuration.GetSection(ConvocaOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.BaseUrl), "Convoca:BaseUrl es requerido.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.DatasetId), "Convoca:DatasetId es requerido.")
+            .Validate(options => options.TimeoutSeconds > 0, "Convoca:TimeoutSeconds debe ser mayor a cero.")
             .ValidateOnStart();
 
         var allowedOrigins = _configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -49,13 +49,13 @@ public class Startup
             });
         });
 
-        services.AddHttpClient<ISecopApiClient, SecopApiClient>((serviceProvider, client) =>
+        services.AddHttpClient<IConvocaApiClient, ConvocaApiClient>((serviceProvider, client) =>
         {
-            var options = serviceProvider.GetRequiredService<IOptions<SecopOptions>>().Value;
+            var options = serviceProvider.GetRequiredService<IOptions<ConvocaOptions>>().Value;
             var baseUrl = options.BaseUrl.EndsWith('/') ? options.BaseUrl : options.BaseUrl + "/";
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("SECOPII/1.0");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("convocaApp/1.0");
 
             if (!string.IsNullOrWhiteSpace(options.AppToken))
                 client.DefaultRequestHeaders.Add("X-App-Token", options.AppToken);
@@ -63,11 +63,12 @@ public class Startup
 
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IMeritExamService, MeritExamService>();
 
-        var connectionString = _configuration.GetConnectionString("SecopDb");
+        var connectionString = _configuration.GetConnectionString("ConvocaDb");
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
-            services.AddDbContext<SecopDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddDbContext<ConvocaDbContext>(options => options.UseSqlServer(connectionString));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
 

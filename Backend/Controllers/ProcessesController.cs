@@ -18,7 +18,7 @@ public class ProcessesController : ControllerBase
     }
 
     /// <summary>
-    /// La consulta es anónima porque el conjunto p6dx-8zbt es dato abierto de SECOP II.
+    /// La consulta es anónima porque el conjunto p6dx-8zbt es dato abierto de contratación pública.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
